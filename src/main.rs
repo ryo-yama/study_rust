@@ -2,26 +2,28 @@ mod fern;
 mod my_math;
 mod caesar_crypt;
 mod life_game;
+mod munou;
 
-use std::env;
-use std::process;
+use std::io::Result;
+use std::{env, process};
 use study_rust::Config;
 
 ///
 /// main 関数
 ///
-fn main() {
+fn main() -> Result<()> {
     // シダの描画
     // fern::run_draw_fern();
-
     // フィボナッチ数列
     // my_math::run_fib(10);
-
     // シーザー暗号
     // caesar_crypt::execute("Hello World!\n");
 
     // ライフゲーム
-    life_game::run().unwrap();
+    life_game::run()?;
+    // 人工無能
+    munou::execute()?;
+    Ok(())
 }
 
 ///

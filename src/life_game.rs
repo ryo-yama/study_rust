@@ -5,10 +5,9 @@ use std::time::Duration;
 use crossterm::{cursor, execute, terminal};
 use crossterm::style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor};
 use crossterm::terminal::Clear;
-use crate::caesar_crypt::execute;
 
 // 定数の宣言
-const GRID_WIDTH: usize = 100; // グリッドの横幅
+const GRID_WIDTH: usize = 90; // グリッドの横幅
 const GRID_HEIGHT: usize = 30; // グリッドの縦幅
 const MAX_TERN: usize = 1000; // 世代数
 
@@ -63,17 +62,17 @@ fn draw_cells(cells: &Vec<Vec<bool>>) -> Result<()> {
                 execute!(stdout()
                     , SetForegroundColor(Color::Yellow)
                     , SetBackgroundColor(Color::Red)
-                    , Print("+"))?;
+                    , Print("＋"))?;
             } else {
                 execute!(stdout()
                     , SetForegroundColor(Color::Blue)
                     , SetBackgroundColor(Color::Black)
-                    , Print("-"))?;
+                    , Print("ー"))?;
             }
         }
         execute!(stdout(), Print("\n"))?;
     }
-    // execute!(stdout(), ResetColor)?;
+    execute!(stdout(), ResetColor)?;
     Ok(())
 }
 

@@ -11,8 +11,10 @@ use bevy::{
 /// Spatial audio uses the distance to attenuate the sound volume. In 2D with the default camera,
 /// 1 pixel is 1 unit of distance, so we use a scale so that 100 pixels is 1 unit of distance for
 /// audio.
+#[allow(unused)]
 const AUDIO_SCALE: f32 = 1. / 100.0;
 
+#[allow(unused)]
 pub fn run_bevy_sample() {
     App::new()
         .add_plugins(DefaultPlugins.set(AudioPlugin {
@@ -25,7 +27,7 @@ pub fn run_bevy_sample() {
         .run();
 }
 
-fn setup(
+fn setup (
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,

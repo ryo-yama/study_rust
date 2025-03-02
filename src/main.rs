@@ -4,6 +4,7 @@ mod caesar_crypt;
 mod life_game;
 mod munou;
 mod bevy_practice;
+mod bevy_timing_game;
 
 use std::io::Result;
 use std::{env, process};
@@ -25,7 +26,9 @@ fn main() -> Result<()> {
     // // 人工無能
     // munou::execute()?;
     // bevy のサンプル
-    bevy_practice::run_bevy_sample();
+    // bevy_practice::run_bevy_sample();
+    // bevy timing game
+    bevy_timing_game::play_game();
     Ok(())
 }
 

@@ -3,6 +3,7 @@ mod my_math;
 mod caesar_crypt;
 mod life_game;
 mod munou;
+mod bevy_practice;
 
 use std::io::Result;
 use std::{env, process};
@@ -19,10 +20,12 @@ fn main() -> Result<()> {
     // シーザー暗号
     // caesar_crypt::execute("Hello World!\n");
 
-    // ライフゲーム
-    life_game::run()?;
-    // 人工無能
-    munou::execute()?;
+    // // ライフゲーム
+    // life_game::run()?;
+    // // 人工無能
+    // munou::execute()?;
+    // bevy のサンプル
+    bevy_practice::run_bevy_sample();
     Ok(())
 }
 

@@ -11,6 +11,8 @@ const GRID_WIDTH: usize = 90; // グリッドの横幅
 const GRID_HEIGHT: usize = 30; // グリッドの縦幅
 const MAX_TERN: usize = 1000; // 世代数
 
+#[allow(unused)]
+
 pub fn run() -> Result<()> {
     // 画面の初期化
     init_screen()?;

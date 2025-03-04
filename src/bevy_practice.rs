@@ -1,4 +1,3 @@
-use std::path::Path;
 ///
 /// bevy sample (Audio / Spatial Audio 2D)
 ///

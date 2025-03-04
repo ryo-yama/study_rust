@@ -27,10 +27,10 @@ fn main() -> Result<()> {
     // munou::execute()?;
 
     // bevy のサンプル
-    bevy_practice::run_bevy_sample();
+    // bevy_practice::run_bevy_sample();
 
     // bevy timing game
-    // bevy_timing_game::play_game();
+    bevy_timing_game::play_game();
     Ok(())
 }
 

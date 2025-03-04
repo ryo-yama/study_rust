@@ -1,3 +1,4 @@
+use std::path::Path;
 ///
 /// bevy sample (Audio / Spatial Audio 2D)
 ///
@@ -42,7 +43,7 @@ fn setup (
         MeshMaterial2d(materials.add(Color::from(BLUE))),
         Transform::from_translation(Vec3::new(0.0, 50.0, 0.0)),
         Emitter::default(),
-        AudioPlayer::new(asset_server.load("sounds/tamco03v-i.ogg")),
+        AudioPlayer::new(asset_server.load("sounds/Windless Slopes.ogg")),
         PlaybackSettings::LOOP.with_spatial(true),
     ));
 

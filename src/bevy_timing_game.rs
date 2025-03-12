@@ -21,17 +21,16 @@ const SLIDER_DEFAULT_POINTS: isize = -100;
 const SCOREBOARD_FONT_SIZE: f32 = 40.0;
 const SCOREBOARD_COLOR: Color = Color::BLACK;
 
-
 const SLIDER_OK_RANGE: f32 = 100.0;
-const SLIDER_OK_COLOR: Color = Color::srgb(0.7, 0.7, 0.7);
+const SLIDER_OK_COLOR: Color = Color::srgb(1.0, 0.0, 0.0);
 const SLIDER_OK_POINTS: isize = 10;
 
 const SLIDER_GOOD_RANGE: f32 = 60.0;
-const SLIDER_GOOD_COLOR: Color = Color::srgb(0.6, 0.6, 0.6);
+const SLIDER_GOOD_COLOR: Color = Color::srgb(0.0, 1.0, 0.0);
 const SLIDER_GOOD_POINTS: isize = 50;
 
 const SLIDER_PERFECT_RANGE: f32 = 20.0;
-const SLIDER_PERFECT_COLOR: Color = Color::srgb(0.5, 0.5, 0.5);
+const SLIDER_PERFECT_COLOR: Color = Color::srgb(0.0, 0.0, 1.0);
 const SLIDER_PERFECT_POINTS: isize = 100;
 
 // キュー
@@ -86,10 +85,13 @@ pub fn play_game() {
         .insert_resource(Time::<Fixed>::from_seconds(1.0 / 60.0))
         .insert_resource(ScoreBoard { score: 0 })
         .add_systems(Startup, setup)
+        .add_systems(OnEnter(AppState::MainMenu), setup_title_screen)
+        .add_systems(OnEnter(AppState::PlayingGame), setup_play_game_screen)
+        .add_systems(Update, switch_state)
         .add_systems(Update, press_any_key.run_if(in_state(AppState::MainMenu)))
         .add_systems(Update, decide_timing.run_if(in_state(AppState::PlayingGame)))
         .add_systems(Update, apply_velocity.run_if(in_state(AppState::PlayingGame)))
-        // .add_systems(Update, update_scoreboard.run_if(in_state(AppState::PlayingGame)))
+        .add_systems(Update, update_scoreboard.run_if(in_state(AppState::PlayingGame)))
         .run();
 }
 
@@ -97,10 +99,16 @@ pub fn play_game() {
 /// タイミングゲームのセットアップ
 /// 必要な bundle を生成する
 ///
-fn setup (mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup (mut commands: Commands) {
     // カメラ（画面描画用）を生成
     commands.spawn(Camera2d::default());
+}
 
+///
+/// MainMenu 遷移時のセットアップ関数
+/// 必要な bundle を生成する
+///
+fn setup_title_screen (mut commands: Commands, asset_server: Res<AssetServer>) {
     // "Press Any Key" の文字を表示する
     commands.spawn((
         Text::new("Press Any Key ..."),
@@ -111,14 +119,25 @@ fn setup (mut commands: Commands, asset_server: Res<AssetServer>) {
         },
         TextColor(PRESS_ANY_KEY_COLOR.into()),
         TextLayout::new_with_justify(JustifyText::Center),
+        Node {
+            display: Display::None,
+            position_type: PositionType::Absolute,
+            ..default()
+        },
         PressAnyKey,
     ));
+}
 
+///
+/// PlayingGame 遷移時のセットアップ関数
+/// 必要な bundle を生成する
+///
+fn setup_play_game_screen (mut commands: Commands, asset_server: Res<AssetServer>) {
     // スライダーの生成
     commands.spawn(
         Sprite {
             color: SLIDER_DEFAULT_COLOR,
-            custom_size: Some(Vec2::new(WINDOW_SIZE.x, SLIDER_SIZE.y).into()),
+            custom_size: Some(Vec2::new(SLIDER_SIZE.x, SLIDER_SIZE.y).into()),
             anchor: Anchor::Center,
             ..default()
         },
@@ -126,19 +145,20 @@ fn setup (mut commands: Commands, asset_server: Res<AssetServer>) {
 
     // OK ゾーンの生成
     [
-        (SLIDER_OK_COLOR, SLIDER_OK_RANGE),
-        (SLIDER_GOOD_COLOR, SLIDER_GOOD_RANGE),
-        (SLIDER_PERFECT_COLOR, SLIDER_PERFECT_RANGE),
+        (SLIDER_OK_COLOR, SLIDER_OK_RANGE, 1.0),
+        (SLIDER_GOOD_COLOR, SLIDER_GOOD_RANGE, 2.0),
+        (SLIDER_PERFECT_COLOR, SLIDER_PERFECT_RANGE, 3.0),
     ]
         .iter()
-        .for_each(|(color, range)| {
-            commands.spawn(
+        .for_each(|(color, range, pos_z)| {
+            commands.spawn((
                 Sprite {
                     color: *color,
                     custom_size: Some(Vec2::new(range * 2.0, SLIDER_SIZE.y).into()),
                     ..default()
                 },
-            );
+                Transform::from_xyz(0.0, 0.0, *pos_z),
+            ));
         });
 
     // キューの生成
@@ -148,7 +168,7 @@ fn setup (mut commands: Commands, asset_server: Res<AssetServer>) {
             custom_size: Some(CUE_SIZE),
             ..default()
         },
-        Transform::from_xyz(0.0, 0.0, 1.0),
+        Transform::from_xyz(0.0, 0.0, 4.0),
         Cue,
         Velocity(INITIAL_CUE_DIRECTION.normalize() * CUE_SPEED),
     ));
@@ -184,16 +204,27 @@ fn press_any_key (
     mut key_board_event: EventReader<KeyboardInput>,
     press_any_key_query: Query<Entity, With<PressAnyKey>>,
     mut commands: Commands,
-    mut now_state: ResMut<State<AppState>>,
     mut inkey: ResMut<ButtonInput<KeyCode>>
 ) {
     for _event in key_board_event.read() {
         let press_any_key_entity = press_any_key_query.single();
-        commands.entity(press_any_key_entity).try_despawn();
-        // commands.entity(press_any_key_entity).despawn();
-
-        *now_state = State::new(AppState::PlayingGame);
+        commands.entity(press_any_key_entity).despawn();
         inkey.reset_all();
+    }
+}
+
+///
+/// State の切り替え
+///
+fn switch_state (
+    mut next_state: ResMut<NextState<AppState>>,
+    key_input: Res<ButtonInput<KeyCode>>,
+    current_state: Res<State<AppState>>,
+) {
+    if key_input.just_pressed(KeyCode::Space) {
+        if *current_state.get() == AppState::MainMenu {
+                next_state.set(AppState::PlayingGame);
+        }
     }
 }
 
@@ -203,13 +234,12 @@ fn press_any_key (
 ///
 fn update_scoreboard (
     score_board: Res<ScoreBoard>,
-    mut score_board_query: Query<&mut Text, With<ScoreBoard>>,
+    mut score_board_query: Query<&mut TextSpan, With<ScoreBoard>>,
 ) {
     // スコアボードのクエリアイテムを取得する．
-    // TODO: ここで落ちる
-    let mut text = score_board_query.single_mut();
+    let mut text_span = score_board_query.single_mut();
     // スコアを更新する
-    **text = score_board.score.to_string();
+    **text_span = score_board.score.to_string();
 }
 
 ///

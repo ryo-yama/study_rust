@@ -3,6 +3,7 @@ use bevy::input::keyboard::KeyboardInput;
 use bevy::sprite::Anchor;
 use bevy::window::WindowMode;
 use bevy::time::Time;
+use bevy::color::palettes::css;
 
 #[allow(unused)]
 // ウィンドウ設定
@@ -10,34 +11,45 @@ const WINDOW_SIZE: Vec2 = Vec2::new(800.0, 600.0);
 // ゲームの背景色
 const BG_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
 
+// "Press Any Key..."
 const PRESS_ANY_KEY_FONT_SIZE: f32 = 50.0;
 const PRESS_ANY_KEY_COLOR: Color = Color::srgb(0.5, 0.5, 0.5);
 
-const SLIDER_SIZE: Vec2 = Vec2::new(500.0, 50.0);
-const SLIDER_DEFAULT_COLOR: Color = Color::srgb(0.8, 0.8, 0.8);
-const SLIDER_DEFAULT_POINTS: isize = -100;
-
-// スコアボードの文字表示
+// Score Board
 const SCOREBOARD_FONT_SIZE: f32 = 40.0;
 const SCOREBOARD_COLOR: Color = Color::BLACK;
 
-const SLIDER_OK_RANGE: f32 = 100.0;
-const SLIDER_OK_COLOR: Color = Color::srgb(1.0, 0.0, 0.0);
-const SLIDER_OK_POINTS: isize = 10;
+// "譜面部分" の設定
+const SLIDER_SIZE: Vec2 = Vec2::new(500.0, 50.0);
+const SLIDER_DEFAULT_COLOR: Color = Color::srgb(0.8, 0.8, 0.8);
+const SLIDER_DEFAULT_POINTS: isize = 0;
 
-const SLIDER_GOOD_RANGE: f32 = 60.0;
-const SLIDER_GOOD_COLOR: Color = Color::srgb(0.0, 1.0, 0.0);
+// "可"
+const SLIDER_GOOD_RANGE: f32 = 40.0;
 const SLIDER_GOOD_POINTS: isize = 50;
+const SLIDER_GOOD_COLOR: Color = Color::Srgba(css::GRAY);
 
-const SLIDER_PERFECT_RANGE: f32 = 20.0;
-const SLIDER_PERFECT_COLOR: Color = Color::srgb(0.0, 0.0, 1.0);
+// "良"
+const SLIDER_PERFECT_RANGE: f32 = 24.0;
 const SLIDER_PERFECT_POINTS: isize = 100;
+const SLIDER_PERFECT_COLOR: Color = Color::Srgba(css::GOLD);
+const SLIDER_PERFECT_PADDING: f32 = (SLIDER_GOOD_RANGE - SLIDER_PERFECT_RANGE) / 2.0;
 
-// キュー
-const CUE_SIZE: Vec2 = Vec2::new(5.0, 50.0);
-const CUE_SPEED: f32 = 500.0;
-const INITIAL_CUE_DIRECTION: Vec2 = Vec2::new(0.5, -0.5);
-const CUE_COLOR: Color = Color::srgb(0.4, 0.4, 0.4);
+
+const SLIDER_RANGE_PADDING: f32 = 100.0;
+const NOTES_OK_RANGE_OFFSET: f32 = -(WINDOW_SIZE.x / 2.0) + SLIDER_RANGE_PADDING;
+
+
+
+// const SLIDER_OK_RANGE: f32 = 100.0;
+// const SLIDER_OK_COLOR: Color = Color::srgb(1.0, 0.0, 0.0);
+// const SLIDER_OK_POINTS: isize = 10;
+
+// 音符
+const NOTE_SIZE: Vec2 = Vec2::new(24.0, 24.0);
+const NOTE_SPEED: f32 = -400.0;
+const NOTE_COLOR: Color = Color::Srgba(css::RED);
+const INITIAL_NOTE_DIRECTION: Vec2 = Vec2::new(0.5, -0.5);
 
 
 #[derive(Clone, Copy, Eq, PartialEq, Hash, Debug, Default, States)]
@@ -56,7 +68,7 @@ struct ScoreBoard {
 struct PressAnyKey;
 
 #[derive(Component)]
-struct Cue;
+struct NOTE;
 
 #[derive(Component, Deref, DerefMut)]
 struct Velocity(Vec2);
@@ -119,11 +131,11 @@ fn setup_title_screen (mut commands: Commands, asset_server: Res<AssetServer>) {
         },
         TextColor(PRESS_ANY_KEY_COLOR.into()),
         TextLayout::new_with_justify(JustifyText::Center),
-        Node {
-            display: Display::None,
-            position_type: PositionType::Absolute,
-            ..default()
-        },
+        // Node {
+        //     display: Display::None,
+        //     position_type: PositionType::Absolute,
+        //     ..default()
+        // },
         PressAnyKey,
     ));
 }
@@ -137,40 +149,63 @@ fn setup_play_game_screen (mut commands: Commands, asset_server: Res<AssetServer
     commands.spawn(
         Sprite {
             color: SLIDER_DEFAULT_COLOR,
-            custom_size: Some(Vec2::new(SLIDER_SIZE.x, SLIDER_SIZE.y).into()),
+            custom_size: Some(Vec2::new(WINDOW_SIZE.x, SLIDER_SIZE.y).into()),
             anchor: Anchor::Center,
             ..default()
         },
     );
 
-    // OK ゾーンの生成
+    // // デバッグ用
+    // [
+    //     (Color::Srgba(css::GREEN), NOTES_OK_RANGE_OFFSET, 1.0),                                                     // good_min
+    //     (Color::Srgba(css::GREEN), NOTES_OK_RANGE_OFFSET + SLIDER_GOOD_RANGE, 1.0),                                 // good_max
+    //     (Color::Srgba(css::RED), NOTES_OK_RANGE_OFFSET + SLIDER_PERFECT_PADDING, 1.0),                              // perfect_min
+    //     (Color::Srgba(css::RED), NOTES_OK_RANGE_OFFSET + SLIDER_PERFECT_PADDING + SLIDER_PERFECT_RANGE, 1.0),       // perfect_max
+    //     (Color::Srgba(css::BLACK), 0.0, 1.0),
+    // ]
+    //     .iter()
+    //     .for_each(|(color, pos, range)| {
+    //         commands.spawn((
+    //             Sprite {
+    //                 color: *color,
+    //                 custom_size: Some(Vec2::new(range.clone(), SLIDER_SIZE.y + 20.0).into()),
+    //                 ..default()
+    //             },
+    //             // PERFECT : -300 + (24 / 2) + 0 = -300 + 12 = -288
+    //             // GOOD    : -300 + (40 / 2) + 8 = -300 + 28 = -272
+    //             Transform::from_xyz(*pos, 0.0, 1.0),
+    //         ));
+    //     });
+
+    // ノーツ判定場所の生成
     [
-        (SLIDER_OK_COLOR, SLIDER_OK_RANGE, 1.0),
-        (SLIDER_GOOD_COLOR, SLIDER_GOOD_RANGE, 2.0),
-        (SLIDER_PERFECT_COLOR, SLIDER_PERFECT_RANGE, 3.0),
+        (SLIDER_GOOD_COLOR, SLIDER_GOOD_RANGE, 1.0, 0.0),
+        (SLIDER_PERFECT_COLOR, SLIDER_PERFECT_RANGE, 2.0, SLIDER_PERFECT_PADDING),
     ]
         .iter()
-        .for_each(|(color, range, pos_z)| {
+        .for_each(|(color, range, pos_z, padding)| {
             commands.spawn((
                 Sprite {
                     color: *color,
-                    custom_size: Some(Vec2::new(range * 2.0, SLIDER_SIZE.y).into()),
+                    custom_size: Some(Vec2::new(range.clone(), SLIDER_SIZE.y).into()),
                     ..default()
                 },
-                Transform::from_xyz(0.0, 0.0, *pos_z),
+                // PERFECT : -300 + (24 / 2) + 0 = -300 + 12 = -288
+                // GOOD    : -300 + (40 / 2) + 8 = -300 + 28 = -272
+                Transform::from_xyz(NOTES_OK_RANGE_OFFSET + (range / 2.0) + padding, 0.0, *pos_z),
             ));
         });
 
-    // キューの生成
+    // ノーツの生成
     commands.spawn((
         Sprite{
-            color: CUE_COLOR,
-            custom_size: Some(CUE_SIZE),
+            color: NOTE_COLOR,
+            custom_size: Some(NOTE_SIZE),
             ..default()
         },
-        Transform::from_xyz(0.0, 0.0, 4.0),
-        Cue,
-        Velocity(INITIAL_CUE_DIRECTION.normalize() * CUE_SPEED),
+        Transform::from_xyz(WINDOW_SIZE.x / 2.0 - 100.0, 0.0, 3.0),
+        Velocity(INITIAL_NOTE_DIRECTION.normalize() * NOTE_SPEED),
+        NOTE,
     ));
 
     // スコアボードの生成
@@ -251,7 +286,8 @@ fn apply_velocity (
 ) {
     for (mut trans, mut velocity) in &mut query {
         let trans_x = trans.translation.x;
-        if trans_x >= SLIDER_SIZE.x / 2.0 || trans_x <= - SLIDER_SIZE.x / 2.0 {
+        let note_offset = NOTE_SIZE.x / 2.0;
+        if trans_x >= WINDOW_SIZE.x / 2.0 - note_offset || trans_x <= - WINDOW_SIZE.x / 2.0 + note_offset {
             velocity.0 = -velocity.0;
         }
         trans.translation.x += velocity.x * time_step.delta().as_secs_f32();
@@ -265,11 +301,11 @@ fn decide_timing (
     mut commands: Commands,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut score_board: ResMut<ScoreBoard>,
-    cue_query: Query<&Transform, With<Cue>>,
+    note_query: Query<&Transform, With<NOTE>>,
     asset_server: Res<AssetServer>,
 ) {
-    // キューの取得
-    let cue_transform = cue_query.single();
+    // 音符位置の取得
+    let note_transform = note_query.single();
 
     // スペースキーの入力があれば処理を行う
     if keyboard_input.just_pressed(KeyCode::Space) {
@@ -279,14 +315,16 @@ fn decide_timing (
         ));
 
         //
-        let cue_translation_x = cue_transform.translation.x;
+        let note_transform_x = note_transform.translation.x;
+        let perfect_min = NOTES_OK_RANGE_OFFSET + SLIDER_PERFECT_PADDING;
+        let perfect_max = NOTES_OK_RANGE_OFFSET + SLIDER_PERFECT_PADDING + SLIDER_PERFECT_RANGE;
+        let good_min = NOTES_OK_RANGE_OFFSET;
+        let good_max = NOTES_OK_RANGE_OFFSET + SLIDER_GOOD_RANGE;
 
-        if cue_translation_x < SLIDER_PERFECT_RANGE && cue_translation_x > -SLIDER_PERFECT_RANGE {
+        if perfect_min < note_transform_x && note_transform_x < perfect_max {
             score_board.score += SLIDER_PERFECT_POINTS;
-        } else if cue_translation_x < SLIDER_GOOD_RANGE && cue_translation_x > -SLIDER_GOOD_RANGE {
+        } else if good_min < note_transform_x && note_transform_x < good_max {
             score_board.score += SLIDER_GOOD_POINTS;
-        } else if cue_translation_x < SLIDER_OK_RANGE && cue_translation_x > -SLIDER_OK_RANGE {
-            score_board.score += SLIDER_OK_POINTS;
         } else {
             score_board.score += SLIDER_DEFAULT_POINTS;
         }

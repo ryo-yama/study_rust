@@ -27,7 +27,7 @@ pub fn run_bevy_sample() {
         .run();
 }
 
-fn setup (
+fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
